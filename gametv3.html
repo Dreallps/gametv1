@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Quiz AO VIVO – Telejornal</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0f1a;
+    color: white;
+}
+header {
+    background: linear-gradient(90deg, #c40000, #700000);
+    padding: 15px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+}
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+.gc {
+    display: flex;
+    justify-content: space-between;
+    background: #111;
+    padding: 10px;
+    border-left: 6px solid red;
+    margin-bottom: 20px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+}
+button:hover { background: #333; }
+
+.correct { background: #2ecc71; }
+.wrong { background: #e74c3c; }
+
+.hidden { display: none; }
+
+.ranking {
+    background: #111;
+    padding: 15px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📡 QUIZ AO VIVO – NOMENCLATURAS TÉCNICAS (TV)</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="login">
+    <h2>🎤 Identificação do Repórter</h2>
+    <input id="name" placeholder="Nome do aluno" style="width:100%;padding:10px"><br><br>
+    <input id="ra" placeholder="RA / Matrícula" style="width:100%;padding:10px"><br><br>
+    <button onclick="start()">INICIAR TRANSMISSÃO</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="hidden">
+    <div class="gc">
+        <span id="player"></span>
+        <span>⏱️ <span id="time">0</span>s</span>
+        <span>🎯 <span id="score">0</span></span>
+    </div>
+    <div id="question"></div>
+    <div id="answers"></div>
+</div>
+
+<!-- FINAL -->
+<div id="end" class="hidden"></div>
+
+<!-- RANKING -->
+<div class="ranking">
+    <h3>🏆 Ranking AO VIVO</h3>
+    <ol id="ranking"></ol>
+</div>
+
+</div>
+
+<script>
+const quiz = [
+ {q:"O que caracteriza uma transmissão AO VIVO?", a:["Gravação prévia","Simultânea à recepção","Sem edição"], c:1},
+ {q:"Qual setor cria vinhetas, cenários e GC?", a:["Produção","Arte","Direção"], c:1},
+ {q:"A função do áudio ambiente é:", a:["Substituir o repórter","Ilustrar o local","Eliminar ruídos"], c:1},
+ {q:"A divisão em blocos ocorre por causa de:", a:["Falhas técnicas","Intervalos comerciais","Troca de câmera"], c:1},
+ {q:"Break significa:", a:["Encerramento","Intervalo comercial","Vinheta"], c:1},
+ {q:"Color Bars servem para:", a:["Editar imagens","Calibrar equipamentos","Inserir GC"], c:1},
+ {q:"White Balance é:", a:["Corte de imagem","Balanço de branco","Congelamento"], c:1},
+ {q:"Chroma Key permite:", a:["Inserir texto","Substituir uma cor","Cortar áudio"], c:1},
+ {q:"Deadline indica:", a:["Erro","Prazo final","Entrada ao vivo"], c:1},
+ {q:"ENG refere-se a:", a:["Edição","Captação portátil de notícias","Transmissão via internet"], c:1},
+ {q:"Timecode é utilizado para:", a:["Iluminação","Decupagem","Apresentação"], c:1},
+ {q:"Decupagem consiste em:", a:["Gravação","Seleção de trechos","Transmissão"], c:1},
+ {q:"A luz Tally indica:", a:["Câmera desligada","Câmera no ar","Erro técnico"], c:1},
+ {q:"GC significa:", a:["Gravação contínua","Gerador de caracteres","Grupo de câmeras"], c:1},
+ {q:"Teleprompter serve para:", a:["Editar VT","Ler o texto","Inserir vinheta"], c:1}
+];
+
+let i=0, score=0, time=0, timer, bloqueado=false;
+
+function start(){
+ document.getElementById("login").classList.add("hidden");
+ document.getElementById("quiz").classList.remove("hidden");
+ document.getElementById("player").innerText =
+  document.getElementById("name").value + " | RA: " + document.getElementById("ra").value;
+ timer = setInterval(()=>{time++;document.getElementById("time").innerText=time},1000);
+ show();
+}
+
+function show(){
+ bloqueado=false;
+ if(i>=quiz.length){ finish(); return; }
+ document.getElementById("question").innerHTML = `<h2>${i+1}. ${quiz[i].q}</h2>`;
+ document.getElementById("answers").innerHTML =
+  quiz[i].a.map((x,j)=>`<button onclick="answer(${j}, this)">${x}</button>`).join("");
+}
+
+function answer(j, btn){
+ if(bloqueado) return;
+ bloqueado=true;
+
+ const buttons = document.querySelectorAll("#answers button");
+
+ buttons.forEach((b,index)=>{
+   if(index===quiz[i].c) b.classList.add("correct");
+   if(index===j && j!==quiz[i].c) b.classList.add("wrong");
+   b.disabled = true;
+ });
+
+ if(j===quiz[i].c) score++;
+ document.getElementById("score").innerText = score;
+
+ setTimeout(()=>{
+   i++;
+   show();
+ }, 1200);
+}
+
+function finish(){
+ clearInterval(timer);
+ document.getElementById("quiz").classList.add("hidden");
+ document.getElementById("end").classList.remove("hidden");
+
+ let medalha = score===15 ? "🥇 OURO" : score>=11 ? "🥈 PRATA" : "🥉 BRONZE";
+
+ document.getElementById("end").innerHTML = `
+   <h2>📡 Transmissão Encerrada</h2>
+   <p>Tempo: ${time}s</p>
+   <p>Acertos: ${score}/15</p>
+   <p>Medalha: ${medalha}</p>`;
+
+ let r = JSON.parse(localStorage.getItem("rankingTV")||"[]");
+ r.push({nome:document.getElementById("name").value, tempo:time, score});
+ r.sort((a,b)=> a.score===b.score ? a.tempo-b.tempo : b.score-a.score);
+ localStorage.setItem("rankingTV",JSON.stringify(r));
+ load();
+}
+
+function load(){
+ let r = JSON.parse(localStorage.getItem("rankingTV")||"[]");
+ document.getElementById("ranking").innerHTML =
+  r.map(x=>`<li>${x.nome} – ${x.score}/15 – ${x.tempo}s</li>`).join("");
+}
+load();
+</script>
+
+</body>
+</html>

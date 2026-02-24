@@ -1,2 +1,2 @@
-# gametv1
+gametv1
 nomenclaturas técnicas TV
